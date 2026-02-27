@@ -1,195 +1,148 @@
-# \# Tesla Manual RAG Assistant (Llama-3 + FAISS + FastAPI)
+# Tesla Manual RAG Assistant (Llama-3 + FAISS + FastAPI)
 
-# 
+## Overview
 
-# \## Overview
+This project implements a Retrieval-Augmented Generation (RAG) system that allows users to ask technical questions about a Tesla Owner’s Manual and receive accurate, context-grounded answers.
 
-# 
+The system retrieves relevant sections from the document using semantic search and generates responses using Llama-3. Each answer includes source page references for verification.
 
-# This project implements a \*\*Retrieval-Augmented Generation (RAG)\*\* system that allows users to ask technical questions about a Tesla Owner’s Manual and receive accurate answers grounded in the document.
+---
 
-# The system uses:
+## Key Features
 
-# \* \*\*Llama-3 (8B Instruct)\*\* for response generation
+* Context-aware answers grounded in the manual
+* Source page citations
+* Fast semantic retrieval using FAISS
+* Config-based architecture
+* FastAPI backend for production deployment
+* Designed for cloud GPU environments
 
-# \* \*\*FAISS\*\* for fast vector similarity search
+---
 
-# \* \*\*BGE embeddings\*\* for high-quality semantic retrieval
+## System Architecture
 
-# \* \*\*FastAPI\*\* for production-ready API deployment
+```
+User Query
+   ↓
+FastAPI API
+   ↓
+Embedding (BGE)
+   ↓
+FAISS Vector Search
+   ↓
+Relevant Context
+   ↓
+Llama-3 Generation
+   ↓
+Final Answer + Sources
+```
 
-# The assistant answers questions using only the manual content and returns \*\*source page references\*\*.
+---
 
-# \## Features
+## Project Structure
 
-# \* Ask technical questions about Tesla features and safety
+```
+tesla-rag/
+│
+├── app/
+│   ├── main.py            # FastAPI application
+│   ├── config.py          # Model and path configuration
+│   ├── rag_pipeline.py    # Retrieval and generation logic
+│   └── build_index.py     # FAISS index creation script
+│
+├── data/
+│   └── tesla_manual.pdf
+│
+├── vector_store/
+│   └── .gitkeep           # Index files generated locally
+│
+├── requirements.txt
+├── README.md
+└── .gitignore
+```
 
-# \* Context-aware answers from a 300+ page manual
+---
 
-# \* Source page citations
+## Setup
 
-# \* Fast semantic search using FAISS
+### 1. Install dependencies
 
-# \* Production-ready FastAPI backend
+```
+pip install -r requirements.txt
+```
 
-# \* Config-driven architecture
+### 2. Build the vector index
 
-# \* GPU-ready (cloud deployment supported)
+Run this once to generate embeddings and FAISS index:
 
-# \## Project Structure
+```
+python app/build_index.py
+```
 
-# tesla-rag/
+This will create:
 
-# │
+* `vector_store/faiss.index`
+* `vector_store/text_chunks.npy`
 
-# ├── app/
+---
 
-# │   ├── main.py            # FastAPI application
+### 3. Run the API
 
-# │   ├── config.py          # Model and path configuration
+```
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
 
-# │   ├── rag\_pipeline.py    # Retrieval + generation logic
+Open:
 
-# │   └── build\_index.py     # Script to create FAISS index
+```
+http://localhost:8000/docs
+```
 
-# │
+---
 
-# ├── data/
+## API Example
 
-# │   └── tesla\_manual.pdf
+**POST /ask**
 
-# │
+Request:
 
-# ├── vector\_store/
+```json
+{
+  "question": "How do I use Autopark?"
+}
+```
 
-# │   └── .gitkeep           # FAISS files generated locally
+Response:
 
-# │
+```json
+{
+  "answer": "...",
+  "sources": [138, 139]
+}
+```
 
-# ├── requirements.txt
+---
 
-# ├── README.md
+## Model Requirements
 
-# └── .gitignore
+This project uses:
 
-# \## How It Works
+* meta-llama/Meta-Llama-3-8B-Instruct
+* BAAI/bge-large-en-v1.5
 
-# 1\. PDF is split into text chunks
+Recommended environment:
 
-# 2\. Chunks are embedded using \*\*BGE-large\*\*
+* GPU with 16GB+ VRAM
+* Or cloud deployment (RunPod, AWS, Vast.ai)
 
-# 3\. Embeddings stored in \*\*FAISS\*\*
+---
 
-# 4\. User query → embedded → top relevant chunks retrieved
+## Use Cases
 
-# 5\. Retrieved context → sent to \*\*Llama-3\*\*
-
-# 6\. Model generates grounded answer with page references
-
-# 
-
-# Architecture:
-
-# User → FastAPI → FAISS → Context → Llama-3 → Response
-
-# ```
-
-# \## Setup Instructions
-
-# 
-
-# \### 1. Install dependencies
-
-# pip install -r requirements.txt
-
-# \### 2. Build the Vector Index (Required)
-
-# Before running the API:
-
-# python app/build\_index.py
-
-# This will generate:
-
-# vector\_store/faiss.index
-
-# vector\_store/text\_chunks.npy
-
-# Note: These files are not included in the repository.
-
-# \### 3. Run FastAPI
-
-# uvicorn app.main:app --host 0.0.0.0 --port 8000
-
-# Open Swagger UI:
-
-# http://localhost:8000/docs
-
-# \## GPU Requirement
-# This project uses:
-
-# \*\*meta-llama/Meta-Llama-3-8B-Instruct\*\*
-# Recommended hardware:
-# \* GPU with \*\*16GB+ VRAM\*\*
-
-# \* Or deploy on:
-
-# 
-
-# &nbsp; \* RunPod
-
-# &nbsp; \* Vast.ai
-
-# &nbsp; \* AWS GPU instances
-
-# For development/testing, cloud GPU is recommended.
-
-# \## API Example
-
-# \*\*POST /ask\*\*
-
-# Request:
-
-# 
-
-# ```json
-
-# {
-
-# &nbsp; "question": "How do I use Autopark?"
-
-# }
-
-# ```
-
-# 
-
-# Response:
-
-# 
-
-# ```json
-
-# {
-
-# &nbsp; "question": "...",
-
-# &nbsp; "answer": "...",
-
-# &nbsp; "sources": \[138, 139]
-
-# }
-
-# ```
-# This system is designed for production deployment using:
-# \* FastAPI + Uvicorn
-
-# \* Docker (optional)
-
-# \* Cloud GPU platforms (RunPod / AWS / GCP)
-
-# \## Notes
-
-# \* FAISS index must be generated locally using `build\_index.py`
+* Technical documentation assistants
+* Customer support automation
+* Enterprise knowledge base search
+* Internal document QA systems
 
 # \* Llama-3 requires Hugging Face access approval
 
